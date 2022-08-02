@@ -1,0 +1,3 @@
+fn add(a: num, b: num) -> num {
+    println("{}", a + b);
+}
