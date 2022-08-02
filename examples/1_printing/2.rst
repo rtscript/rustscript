@@ -1,0 +1,5 @@
+//variable declaration by let. immutable by default
+fn main() {
+    let a = 3;
+    println("{}", a);
+}

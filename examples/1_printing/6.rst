@@ -1,0 +1,7 @@
+fn add(a: num, b: num) {
+    println("{}", a + b);
+}   
+
+fn main() {
+    add(1, 3);
+}

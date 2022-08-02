@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use crate::context::*;
 use crate::error::*;
 use crate::ast::*;
 use crate::token::*;
 use crate::token_type::*;
 use crate::object::*;
+use crate::utility::*;
 
 
 
@@ -172,7 +171,7 @@ impl<'a> Parser<'a> {
 
    
 
-    fn type_store(&mut self) ->  Result<(), Problem> {
+    fn type_annotation(&mut self) ->  Result<(), Problem> {
         self.consume(TokenType::Identifier, "Variable name Required")?;
         self.add_token(AstType::Identifier);
         self.consume(TokenType::Annotation, "Variable must be annotated with : [variable name: variable type] ")?;
@@ -185,10 +184,14 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
+
     fn function(&mut self, kind: &str) -> Result<(), Problem> {
 
-        let mut local_context = HashMap::new();
-        local_context.insert("name", 90);
+        let mut fm = false;
+        if self.peek().as_string() == "main" {
+            self.add_token(AstType::LeftParen);
+            fm = true;
+        }
 
         self.add_token(AstType::Fn);
 
@@ -201,11 +204,11 @@ impl<'a> Parser<'a> {
 
 
         if !self.check(TokenType::RightParen) {
-            self.type_store()?;
+            self.type_annotation()?;
 
             while self.is_match(&[TokenType::Comma]) {
                 self.add_token(AstType::Comma);
-                self.type_store()?;
+                self.type_annotation()?;
             }
         }
         
@@ -223,6 +226,29 @@ impl<'a> Parser<'a> {
         // check for block, ie end paramater
         self.block()?;
 
+        if fm == true {
+            self.add_token(AstType::Main);
+        }
+
+        Ok(())
+    }
+
+    fn function_call_params(&mut self) -> Result<(), Problem> {
+        match self.peek().token_type() {
+            //replace with variables
+            TokenType::Identifier => {
+                self.consume(TokenType::Identifier, "Expect paramater name")?;
+                self.add_token(AstType::Identifier);
+            }
+
+            TokenType::String => {
+                self.consume(TokenType::String, "Expect paramater name")?;
+                self.add_token(AstType::String);
+            }
+
+            _ => println!("not covered yet"),
+        }
+
         Ok(())
     }
 
@@ -238,13 +264,10 @@ impl<'a> Parser<'a> {
 
 
         if !self.check(TokenType::RightParen) {
-            
-            self.consume(TokenType::Identifier, "Expect paramater name")?;
-            self.add_token(AstType::Identifier);
-
+            //Take function call params and while we get paramaters, keep getting them
+            self.function_call_params()?;
             while self.is_match(&[TokenType::Comma]) {
-                self.consume(TokenType::Identifier, "Jparser: Expect paramter name")?;
-                self.add_token(AstType::Identifier);
+                self.function_call_params()?;
             }
         }
 

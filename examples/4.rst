@@ -1,5 +1,0 @@
-fn main() {
-    let a = "hello world";
-    let b = 3;
-    println("{} I am {} years old", a, b);
-}

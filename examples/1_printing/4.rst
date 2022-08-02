@@ -1,0 +1,6 @@
+//format print example with multiple variable types
+fn main() {
+    let message = "hello world";
+    let age = 3;
+    println("{} I am {} years old", message, age);
+}

@@ -1,0 +1,8 @@
+//Passing message through function
+fn print_message(message: str) {
+    println("{}", message);
+}
+
+fn main() {
+    print_message("Type to beat rust");
+}

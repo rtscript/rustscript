@@ -12,14 +12,14 @@ pub struct Returns {
 }
 
 #[derive(Debug)]
-pub struct Functions {
+pub struct Function {
     pub params: Vec<Params>,
     pub returns: Vec<Returns>,
 }
 
 #[derive(Debug)]
 pub struct Context {
-    pub functions: HashMap<String, Functions>,
+    pub functions: HashMap<String, Function>,
 }
 
 impl Context {
@@ -35,7 +35,7 @@ impl Context {
         returns: String,
     ) -> Result<(), Problem> {
 
-        let mut functions = Functions {
+        let mut function = Function {
             params: Vec::new(),
             returns: Vec::new(),
         };
@@ -48,14 +48,14 @@ impl Context {
             return_type: returns,
         };
 
-        functions.params.push(function_param);
-        functions.returns.push(return_param);
+        function.params.push(function_param);
+        function.returns.push(return_param);
 
         let mut context = Context {
             functions: HashMap::new()
         };
 
-        self.functions.insert(name, functions);
+        self.functions.insert(name, function);
 
 
 

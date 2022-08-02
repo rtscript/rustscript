@@ -81,4 +81,5 @@ pub enum AstType {
     Let,
     While,
     Eof,
+    Main,
 }

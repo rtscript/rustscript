@@ -290,7 +290,7 @@ impl Scanner {
             "while" => Some(TokenType::While),
             "break" => Some(TokenType::Break),
             "num" => Some(TokenType::NumberType),
-            "string" => Some(TokenType::StringType),
+            "str" => Some(TokenType::StringType),
             "bool" => Some(TokenType::BoolType),
             _ => None,
         }

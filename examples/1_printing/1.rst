@@ -1,0 +1,4 @@
+// Function main as entry point executes at startup and prints "Hello world".
+fn main() {
+    println("Hello world");
+}

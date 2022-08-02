@@ -18,6 +18,7 @@ mod object;
 mod token;
 mod token_type;
 mod context;
+mod utility;
 
 
 
@@ -64,7 +65,7 @@ fn run_prompt() {
 }
 
 fn write_to_file(code: String) -> std::io::Result<()> {
-    let mut file = File::create("index.js")?;
+    let mut file = File::create("target/index.js")?;
     file.write_all(code.as_bytes())?;
     Ok(())
 }
@@ -115,14 +116,12 @@ fn run(source: String) -> Result<(), Problem> {
             AstType::Let => code += "let ",
             AstType::Number => code += ast_tokens.ast_lexeme(),
             AstType::Assign => code += " = ",
+            AstType::Main => code += ")()", 
             _ => println!("Undefined"),
         }
     }
 
     write_to_file(code);
-    
-    
-
 
     Ok(())
 }
