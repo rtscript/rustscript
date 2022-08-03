@@ -19,7 +19,8 @@ mod token;
 mod token_type;
 mod context;
 mod utility;
-
+mod typechecker;
+mod types;
 
 
 
@@ -76,9 +77,9 @@ fn run(source: String) -> Result<(), Problem> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
 
-    for token in tokens {
-        println!("{:?}", token);
-    }
+    // for token in tokens {
+    //     println!("{:?}", token);
+    // }
 
     //Parse the Ast
     let mut parser = Parser::new(tokens);
@@ -87,7 +88,7 @@ fn run(source: String) -> Result<(), Problem> {
     let mut code: String =  "".to_string();
     let mut tabs:usize = 0;
     for ast_tokens in ast {
-        println!("{:?}", &ast_tokens);
+        // println!("{:?}", &ast_tokens);
         match ast_tokens.ast_type {
             AstType::Fn => code += "function ",
             AstType::Identifier => code += ast_tokens.ast_lexeme(),

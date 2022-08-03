@@ -4,7 +4,9 @@ use crate::ast::*;
 use crate::token::*;
 use crate::token_type::*;
 use crate::object::*;
-use crate::utility::*;
+use crate::typechecker::*;
+use crate::types;
+use crate::types::*;
 
 
 
@@ -15,6 +17,7 @@ pub struct Parser<'a> {
     had_error: bool,
     ast_tokens: Vec<AstToken>,
     context: Context,
+    typechecker: TypeChecker,
 }
 
 impl<'a> Parser<'a> {
@@ -25,6 +28,7 @@ impl<'a> Parser<'a> {
             had_error: false,
             ast_tokens: Vec::new(),
             context: Context::new(),
+            typechecker: TypeChecker::new(),
         }
     }
 
@@ -171,10 +175,10 @@ impl<'a> Parser<'a> {
 
    
 
-    fn type_annotation(&mut self) ->  Result<(), Problem> {
-        self.consume(TokenType::Identifier, "Variable name Required")?;
+    fn param_annotation(&mut self) ->  Result<(), Problem> {
+        self.consume(TokenType::Identifier, "Param type Required")?;
         self.add_token(AstType::Identifier);
-        self.consume(TokenType::Annotation, "Variable must be annotated with : [variable name: variable type] ")?;
+        self.consume(TokenType::Annotation, "Param type must be annotated with : [variable name: variable type] ")?;
         
         let var_type = self.peek().token_type();
         if matches!(var_type, TokenType::NumberType | TokenType::StringType | TokenType::BoolType) {
@@ -204,11 +208,11 @@ impl<'a> Parser<'a> {
 
 
         if !self.check(TokenType::RightParen) {
-            self.type_annotation()?;
+            self.param_annotation()?;
 
             while self.is_match(&[TokenType::Comma]) {
                 self.add_token(AstType::Comma);
-                self.type_annotation()?;
+                self.param_annotation()?;
             }
         }
         
@@ -218,7 +222,7 @@ impl<'a> Parser<'a> {
 
         //Returns go here
 
-        self.context.establish_context("add".to_string(), "num".to_string(), "num".to_string())?;
+        self.context.function_context("add".to_string(), "num".to_string(), "num".to_string())?;
     
         //left brace {
         self.consume(TokenType::LeftBrace, &format!("Jparser: Expect '{{' before {kind} body."))?;
@@ -293,7 +297,6 @@ impl<'a> Parser<'a> {
         Ok(())
     }
     
-    //self.expression()
     fn var_declaration(&mut self) -> Result<(), Problem> {
         
         //let
@@ -302,17 +305,25 @@ impl<'a> Parser<'a> {
         //variable name
         let name = self.consume(TokenType::Identifier, "Jparser: Expect variable name.")?;
 
-        // println!("{:?}", &name);
+        let name_info = name.as_string();
+        // println!("{:?}", &name_info);
 
         self.add_token_object(AstType::Identifier, name.literal);
     
-
-
         self.consume(TokenType::Assign, "Jparser: Expect '=' variable assignment required.")?;
         self.add_token(AstType::Assign);
 
+
+        let types = Types {
+            name: "str".to_owned(),
+        };
+
+        let test = self.typechecker.test([TokenType::String, TokenType::Plus, TokenType::String].to_vec(), types);
+
+        println!("Answer: {}", test);
+
         self.var_values()?;
-    
+
         self.consume(TokenType::SemiColon, "Jparser: Expect ';' after variable declaration.")?;
         self.add_token(AstType::SemiColon);
          
