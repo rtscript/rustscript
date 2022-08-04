@@ -1,14 +1,10 @@
-use crate::context::*;
 use crate::error::*;
 use crate::ast::*;
 use crate::token::*;
 use crate::token_type::*;
 use crate::object::*;
 use crate::typechecker::*;
-use crate::types;
 use crate::types::*;
-
-
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -16,7 +12,6 @@ pub struct Parser<'a> {
     current: usize,
     had_error: bool,
     ast_tokens: Vec<AstToken>,
-    context: Context,
     typechecker: TypeChecker,
 }
 
@@ -27,9 +22,41 @@ impl<'a> Parser<'a> {
             current: 0,
             had_error: false,
             ast_tokens: Vec::new(),
-            context: Context::new(),
             typechecker: TypeChecker::new(),
         }
+    }
+
+    fn test_types(&mut self) {
+        let str_types = Types {
+            name: "str".to_owned(),
+        };
+        let num_type = Types {
+            name: "num".to_owned(),
+        };
+
+        let sms = self.typechecker.test([AstType::String, AstType::Minus, AstType::String].to_vec(), str_types.clone());
+        println!("SmS: {}", sms);
+        
+        let ssts = self.typechecker.test([AstType::String, AstType::Star, AstType::String].to_vec(), str_types.clone());
+        println!("ssts: {}", ssts);
+        
+        let ssls = self.typechecker.test([AstType::String, AstType::Slash, AstType::String].to_vec(), str_types.clone());
+        println!("ssls: {}", ssls);
+        
+        let sps = self.typechecker.test([AstType::String, AstType::Plus, AstType::String].to_vec(), str_types.clone());
+        println!("sps: {}", sps);
+
+        let nmn = self.typechecker.test([AstType::Number, AstType::Minus, AstType::Number].to_vec(), num_type.clone());
+        println!("nmn: {} ", nmn);
+
+        let nsln = self.typechecker.test([AstType::Number, AstType::Slash, AstType::Number].to_vec(), num_type.clone());
+        println!("nsln: {} ", nsln);
+
+        let nstn = self.typechecker.test([AstType::Number, AstType::Slash, AstType::Number].to_vec(), num_type.clone());
+        println!("nstn: {} ", nstn);
+
+        let npn = self.typechecker.test([AstType::Number, AstType::Plus, AstType::Number].to_vec(), num_type.clone());
+        println!("npn: {} ", npn);
     }
 
     pub fn parse(&mut self) -> Result<&Vec<AstToken>, Problem> { 
@@ -221,8 +248,6 @@ impl<'a> Parser<'a> {
         self.add_token(AstType::RightParen);
 
         //Returns go here
-
-        self.context.function_context("add".to_string(), "num".to_string(), "num".to_string())?;
     
         //left brace {
         self.consume(TokenType::LeftBrace, &format!("Jparser: Expect '{{' before {kind} body."))?;
@@ -279,7 +304,7 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::RightParen, "Close function call body")?;
         self.add_token(AstType::RightParen);
 
-        //Check for return context if not there
+        //Check for return environment if not there
         self.consume(TokenType::SemiColon, "End function call with semi-colon")?;
         self.add_token(AstType::SemiColon);
 
@@ -313,14 +338,13 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::Assign, "Jparser: Expect '=' variable assignment required.")?;
         self.add_token(AstType::Assign);
 
+        self.test_types();
 
-        let types = Types {
-            name: "str".to_owned(),
-        };
 
-        let test = self.typechecker.test([TokenType::String, TokenType::Plus, TokenType::String].to_vec(), types);
+        // let test = self.typechecker.test([TokenType::Let, TokenType::Identifier, TokenType::Number].to_vec(), types);
 
-        println!("Answer: {}", test);
+
+        
 
         self.var_values()?;
 

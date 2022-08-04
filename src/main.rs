@@ -17,7 +17,7 @@ use scanner::*;
 mod object;
 mod token;
 mod token_type;
-mod context;
+mod environment;
 mod utility;
 mod typechecker;
 mod types;

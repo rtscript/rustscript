@@ -39,7 +39,8 @@ impl fmt::Display for AstToken {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq)]
+
 pub enum AstType {
     Break,
     LeftParen,

@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::token_type::TokenType;
+
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Types {
     pub name: String,
@@ -27,7 +29,12 @@ impl Types {
     }
     
     pub fn equals(&self, other: Types) -> bool {
-        println!("Here we go: {} {}", &self.get_name(), other.name);
+        // println!("Type Equality Check: {} {}", &self.get_name(), other.name);
         self.get_name() == other.name
+    }
+    // 'number' to Type.number  TokenType::Number -> Types {names: "num"}
+    // 5:05 episode 4: Folder 1.
+    pub fn from_string(type_str: String) -> Types {
+        Types { name: "num".to_string() }
     }
 }
