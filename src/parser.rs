@@ -26,39 +26,110 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn test_types(&mut self) {
-        let str_types = Types {
-            name: "str".to_owned(),
-        };
-        let num_type = Types {
-            name: "num".to_owned(),
-        };
-
-        let sms = self.typechecker.test([AstType::String, AstType::Minus, AstType::String].to_vec(), str_types.clone());
-        println!("SmS: {}", sms);
+    fn test_last(&mut self) {
+        let string_type = Types::new(RustScriptType::String);
+        let number_type = Types::new(RustScriptType::Number);
         
-        let ssts = self.typechecker.test([AstType::String, AstType::Star, AstType::String].to_vec(), str_types.clone());
-        println!("ssts: {}", ssts);
+
         
-        let ssls = self.typechecker.test([AstType::String, AstType::Slash, AstType::String].to_vec(), str_types.clone());
-        println!("ssls: {}", ssls);
-        
-        let sps = self.typechecker.test([AstType::String, AstType::Plus, AstType::String].to_vec(), str_types.clone());
-        println!("sps: {}", sps);
+        self.typechecker.test(vec![AstType::Number], number_type.clone());
+        self.typechecker.test(vec![AstType::String], string_type.clone());
 
-        let nmn = self.typechecker.test([AstType::Number, AstType::Minus, AstType::Number].to_vec(), num_type.clone());
-        println!("nmn: {} ", nmn);
+        self.typechecker.test(vec![AstType::Number, AstType::Plus, AstType::Number], number_type.clone());
+        self.typechecker.test(vec![AstType::Number, AstType::Slash, AstType::Number], number_type.clone());
+        self.typechecker.test(vec![AstType::Number, AstType::Star, AstType::Number], number_type.clone());
+        self.typechecker.test(vec![AstType::Number, AstType::Minus, AstType::Number], number_type.clone());
 
-        let nsln = self.typechecker.test([AstType::Number, AstType::Slash, AstType::Number].to_vec(), num_type.clone());
-        println!("nsln: {} ", nsln);
+        // self.typechecker.test(vec![AstType::String, AstType::Minus, AstType::String], string_type.clone());
+        // self.typechecker.test(vec![AstType::String, AstType::Slash, AstType::String], string_type.clone());
+        // self.typechecker.test(vec![AstType::String, AstType::Star, AstType::String], string_type.clone());
+        self.typechecker.test(vec![AstType::String, AstType::Plus, AstType::String], string_type.clone());
 
-        let nstn = self.typechecker.test([AstType::Number, AstType::Slash, AstType::Number].to_vec(), num_type.clone());
-        println!("nstn: {} ", nstn);
+        let num_var_x = AstType::NumberType(String::from("x"));
+        let num_var_y = AstType::NumberType(String::from("y"));
+        let num_var_str_x = AstType::StringType(String::from("x"));
 
-        let npn = self.typechecker.test([AstType::Number, AstType::Plus, AstType::Number].to_vec(), num_type.clone());
-        println!("npn: {} ", npn);
+        self.typechecker.test(vec![AstType::Let, num_var_x.clone(), AstType::Number], number_type.clone());
+        self.typechecker.test(vec![num_var_x.clone()], number_type.clone());
+
+        self.typechecker.test(
+            vec![AstType::LeftBrace,
+                //let x = Number;
+                AstType::Let,
+                num_var_x.clone(),
+                AstType::Number,
+                AstType::SemiColon,
+                //let y = Number;
+                AstType::Let,
+                num_var_y.clone(),
+                AstType::Number,
+                AstType::SemiColon,
+                //x * Number + y
+                num_var_x.clone(),
+                AstType::Star,
+                AstType::Number,
+                AstType::Plus,
+                num_var_y.clone(),
+                AstType::SemiColon,
+            ], number_type.clone(),
+        );
+
+        // self.typechecker.test_multi(
+        //     vec![
+        //         vec![AstType::LeftBrace],
+        //         vec![
+        //             AstType::Let,
+        //             num_var_x.clone(),
+        //             AstType::Number,
+        //         ], 
+        //         vec![
+        //             AstType::Let,
+        //             num_var_y.clone(),
+        //             AstType::Number
+        //         ],
+        //         vec![
+        //             num_var_x.clone(),
+        //             AstType::Star,
+        //             AstType::Number,
+        //             AstType::Plus,
+        //             num_var_y.clone(),
+        //         ],
+        //     ], number_type.clone(),
+        // );
+
+
+        // self.typechecker.test_multi(
+        //     vec![
+        //         vec![
+        //             AstType::Let,
+        //             num_var_x.clone(),
+        //             AstType::Number,
+        //         ], 
+        //         vec![AstType::LeftBrace],
+        //         vec![
+        //             AstType::Let,
+        //             num_var_str_x.clone(),
+        //             AstType::String,
+        //         ],
+        //         vec![
+        //             num_var_str_x.clone(),
+        //             AstType::Plus,
+        //             AstType::String,
+        //         ],
+        //         vec![AstType::RightBrace],
+        //         vec![
+        //             num_var_x.clone(),
+        //             AstType::Minus,
+        //             AstType::Number,
+        //         ],
+        //     ], number_type.clone()
+        // );
+
+
     }
 
+
+    
     pub fn parse(&mut self) -> Result<&Vec<AstToken>, Problem> { 
         while !self.is_at_end() {
             self.declaration(); 
@@ -330,7 +401,7 @@ impl<'a> Parser<'a> {
         //variable name
         let name = self.consume(TokenType::Identifier, "Jparser: Expect variable name.")?;
 
-        let name_info = name.as_string();
+        // let name_info = name.as_string();
         // println!("{:?}", &name_info);
 
         self.add_token_object(AstType::Identifier, name.literal);
@@ -338,7 +409,7 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::Assign, "Jparser: Expect '=' variable assignment required.")?;
         self.add_token(AstType::Assign);
 
-        self.test_types();
+        self.test_last();
 
 
         // let test = self.typechecker.test([TokenType::Let, TokenType::Identifier, TokenType::Number].to_vec(), types);
@@ -485,11 +556,11 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::SemiColon, "Jparser: Expect ';' after loop condition.")?;
     
         //now expefct a right parenthesis, if not check for another expression
-        let increment = if self.check(TokenType::RightParen) {
-            None
-        } else {
-            Some(self.expression()?)
-        };
+        // let increment = if self.check(TokenType::RightParen) {
+        //     None
+        // } else {
+        //     Some(self.expression()?)
+        // };
     
         //now check for a right parenthesis
         self.consume(TokenType::RightParen, "Jparser: Expect ')' after for clauses.")?;

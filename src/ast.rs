@@ -17,7 +17,7 @@ impl AstToken {
         }
     }
     pub fn ast_type(&self) -> AstType {
-        self.ast_type
+        self.ast_type.clone()
     }
     pub fn ast_lexeme(&self) -> &str {
         &self.lexeme
@@ -39,8 +39,7 @@ impl fmt::Display for AstToken {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq)]
-
+#[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub enum AstType {
     Break,
     LeftParen,
@@ -83,4 +82,7 @@ pub enum AstType {
     While,
     Eof,
     Main,
+    NumberType(String),
+    StringType(String),
+    UnKnown,
 }

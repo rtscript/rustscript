@@ -1,4 +1,4 @@
-use crate::object::{Object, self};
+use crate::object::{Object};
 use crate::token_type::*;
 use std::fmt;
 

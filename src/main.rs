@@ -22,9 +22,6 @@ mod utility;
 mod typechecker;
 mod types;
 
-
-
-
 pub fn main() {
     let args: Vec<String> = args().collect();
     match args.len() {

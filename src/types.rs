@@ -1,26 +1,35 @@
 use std::fmt;
 
-use crate::token_type::TokenType;
+use crate::ast::{AstType};
+
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub enum RustScriptType {
+    Number,
+    String,
+    UnKnown,
+}
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Types {
-    pub name: String,
+    pub name: RustScriptType,
 }
 
 impl fmt::Display for Types {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.name)
+        write!(f, "{:?}", self.name)
     }
 }
 
 impl Types {
-    pub fn new(&self, tname: String) -> Self {
-        Types {
-            name: tname,
-        }
+    pub fn new(types: RustScriptType) -> Types{
+        Types { name: types }
     }
 
-    fn get_name(&self) -> String {
+    pub fn self_nb(self) -> Types {
+        self
+    }
+
+    fn get_name(&self) -> RustScriptType {
         self.name.clone()
     }
 
@@ -30,11 +39,25 @@ impl Types {
     
     pub fn equals(&self, other: Types) -> bool {
         // println!("Type Equality Check: {} {}", &self.get_name(), other.name);
-        self.get_name() == other.name
+        self.name == other.name
     }
-    // 'number' to Type.number  TokenType::Number -> Types {names: "num"}
-    // 5:05 episode 4: Folder 1.
-    pub fn from_string(type_str: String) -> Types {
-        Types { name: "num".to_string() }
+    // meant to convert type annotation 'number'  in code for his langauge to Type.number  
+    pub fn from_string(type_str: RustScriptType) -> Types {
+        match type_str {
+            RustScriptType::Number => Types { name: RustScriptType::Number },
+            RustScriptType::String => Types { name: RustScriptType::String },
+            RustScriptType::UnKnown =>  {
+                println!("unknown type {:?}", &type_str);
+                Types { name: RustScriptType::UnKnown }
+            },
+        }
+    }
+
+    pub fn type_to_token(&self) -> AstType {
+        match self {
+            Types { name: RustScriptType::Number } => AstType::Number,
+            Types { name: RustScriptType::String }  => AstType::String,
+            Types { name: RustScriptType::UnKnown }  => AstType::UnKnown,
+        }
     }
 }

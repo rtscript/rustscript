@@ -2,6 +2,7 @@ use crate::object::*;
 use crate::token::*;
 use crate::token_type::*;
 
+#[derive(Debug)]
 pub enum Problem {
     ParseError { token: Token, message: String },
     RuntimeError { token: Token, message: String },

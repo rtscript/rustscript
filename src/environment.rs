@@ -1,13 +1,23 @@
 use std::collections::HashMap;
-
-use crate::ast::AstType;
-use crate::{ types::Types };
+use crate::{ types::Types};
 use crate::error::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeEnvironment {
-    pub record: HashMap<AstType, Types>,
-    pub parent: HashMap<AstType, Types>,
+    pub record: HashMap<String, Types>,
+    pub parent: HashMap<String, Types>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Environments {
+    pub global_env: TypeEnvironment,
+    pub branch: Vec<TypeEnvironment>
+}
+
+impl Environments {
+    pub fn new() -> Environments {
+        Environments { global_env: TypeEnvironment::new(), branch: vec![TypeEnvironment::new()] }
+    }
 }
 
 impl TypeEnvironment {
@@ -18,11 +28,17 @@ impl TypeEnvironment {
         }
     }
 
-    pub fn define(&mut self, vname: AstType, vtype: Types) {
-        self.record.insert(vname, vtype);
+
+    pub fn define(&mut self, vname: String, vtype: Types) -> Types {
+        self.record.insert(vname, vtype.to_owned());
+        vtype.to_owned()
     }
 
-    pub fn lookup(&self, vname: AstType) -> Result<&Types, Problem> {
+    pub fn lookup(&mut self, vname: String) -> Result<&Types, Problem> {
+        self.resolve(vname)
+    }
+
+    pub fn resolve(&mut self, vname: String) -> Result<&Types, Problem> {
         if self.record.contains_key(&vname) {
             Ok(self.record.get(&vname).expect("Couln't get type from name"))
         } else {
