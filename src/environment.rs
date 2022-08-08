@@ -8,24 +8,16 @@ pub struct TypeEnvironment {
     pub parent: HashMap<String, Types>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Environments {
-    pub global_env: TypeEnvironment,
-    pub branch: Vec<TypeEnvironment>
-}
-
-impl Environments {
-    pub fn new() -> Environments {
-        Environments { global_env: TypeEnvironment::new(), branch: vec![TypeEnvironment::new()] }
-    }
-}
-
 impl TypeEnvironment {
     pub fn new() -> TypeEnvironment {
         TypeEnvironment {
             record: HashMap::new(),
             parent: HashMap::new(),
         }
+    }
+
+    pub fn branch_env(parent: HashMap<String, Types>) -> TypeEnvironment {
+        TypeEnvironment { record: HashMap::new(), parent, }
     }
 
 
@@ -38,9 +30,20 @@ impl TypeEnvironment {
         self.resolve(vname)
     }
 
+    //Problem Very nature of adding record env to scope underneath and not 2 scopes
+    //down means scope 3 branches down will not have access to global scope
+    //May have to copy envs .records + .parent to child environment
+    //Alternatively create self-referentials structs using Box perhaps? thus 
+    //parents is contains a TypeEnvironment copy of its parent, then recursively
+    //go up parent environements to find variables 
     pub fn resolve(&mut self, vname: String) -> Result<&Types, Problem> {
         if self.record.contains_key(&vname) {
-            Ok(self.record.get(&vname).expect("Couln't get type from name"))
+            Ok(self.record.get(&vname).expect("Couln't get type from records for variable"))
+        } else if self.parent.is_empty() {
+            println!("Variable not defined {}", &vname);
+            Err(Problem::fail())
+        } else if self.parent.contains_key(&vname) {
+            Ok(self.parent.get(&vname).expect("Couln't get type from parent for variable"))
         } else {
             Err(Problem::fail())
         }

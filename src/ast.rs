@@ -41,6 +41,7 @@ impl fmt::Display for AstToken {
 
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub enum AstType {
+    Set,
     Break,
     LeftParen,
     RightParen,

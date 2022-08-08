@@ -1,17 +1,16 @@
-use std::collections::HashMap;
-use crate::{ast::*, environment};
-use crate::environment::{TypeEnvironment, Environments};
+use crate::{ast::*};
+use crate::environment::{TypeEnvironment};
 use crate::types::*;
 
 #[derive(Debug)]
 pub struct TypeChecker {
-    env: Environments,
+    env: TypeEnvironment,
 }
 
 impl TypeChecker {
     pub fn new() -> TypeChecker {
         TypeChecker {
-            env: Environments::new(),
+            env: TypeEnvironment::new(),
         }
     }
 
@@ -40,7 +39,7 @@ impl TypeChecker {
     }
 
     fn throw(&self, actual_type: Types, expected_type: Types, value: AstType, exp: Vec<AstType>) {
-        println!("Expected '{}' type for {:?} in {:?} but got {}", expected_type, value, exp, actual_type);
+        println!("Expected '{}' type for '{:?}' in '{:?}' but got '{}'", expected_type, value, exp, actual_type);
     }
 
     //Checks if both operands Types match ie str, str and num, num 
@@ -48,14 +47,13 @@ impl TypeChecker {
         //value, exp for error purposes
         if actual_type.equals(expected_type.clone()) != true {
             self.throw(actual_type.clone(), expected_type, value, exp);
-            // println!("Types failed to match in expect for binary operation"); 
         }
         actual_type
     }
 
     //Get types for both operands. See binary operations available for these operands match the types
     //so only the same types can do binary operations on one another ie num + num, str + str
-    fn binary(&mut self, exp: &Vec<AstType>, env: &Option<TypeEnvironment>) -> Types {
+    fn binary(&mut self, exp: &Vec<AstType>, env: &mut TypeEnvironment) -> Types {
         let t1 = self.tc(&vec![exp[0].clone()], env);
         let t2 = self.tc(&vec![exp[2].clone()], env);
 
@@ -69,18 +67,19 @@ impl TypeChecker {
 
 
 
-    pub fn tc(&mut self, exp: &Vec<AstType>, env: &Option<TypeEnvironment>) -> Types {
+    pub fn tc(&mut self, exp: &Vec<AstType>, env: &mut TypeEnvironment) -> Types {
         if exp.len() == 5 {
-            println!("We in here");
+            // println!("We got 5 operands");
             let mut current_type = self.tc(
                 &vec![exp[0].clone(), 
                 exp[1].clone(), 
-                exp[2].clone()], &env
+                exp[2].clone()], env
             );
-            return self.tc(&vec![current_type.type_to_token(), exp[3].clone(), exp[4].clone()], &env);
+            return self.tc(&vec![current_type.type_to_token(), exp[3].clone(), exp[4].clone()], env);
         }
 
         if exp.len() == 3 {
+            // println!("We got 3 operands");
             match exp[1] {
                 AstType::Plus | AstType::Minus | AstType::Star | AstType::Slash => return self.binary(&exp, env),
                 _ => {},
@@ -90,24 +89,34 @@ impl TypeChecker {
        
         
         match &exp[0] {
+            AstType::Set => {
+                //variable updating (set x 10)
+                let var_name = &exp[1];
+                let value = &exp[2];
+
+                //The type of the new value should match to the 
+                //previous type when the variable was defined
+
+                let value_type = self.tc(&vec![value.to_owned()], env);
+                let var_type = self.tc(&vec![var_name.to_owned()], env);
+
+                self.expect(value_type, var_type, value.to_owned(), exp.to_owned())
+             
+            }
             AstType::Let => {
                 let var_name = match &exp[1] {
                     AstType::NumberType(vname) => vname.to_owned(),
+                    AstType::StringType(vname) => vname.to_owned(),
                     _ => "".to_owned()
                 };
 
                 let var_value = &exp[2];
 
                 //infer value type from value
-                let value_type = self.tc(&vec![var_value.to_owned()], &env);
+                let value_type = self.tc(&vec![var_value.to_owned()], env);
                 //Check if the annotad type :number matches type of inferred value_type, using expect   
 
-                match env {
-                    Some(env) => {
-                        return Types::new(RustScriptType::UnKnown)
-                    },
-                    None => return self.env.global_env.define(var_name.to_owned(), value_type),
-                }
+               return env.define(var_name.to_owned(), value_type).to_owned()
             },
             AstType::String => Types {
                 name: RustScriptType::String,
@@ -115,26 +124,23 @@ impl TypeChecker {
             AstType::Number => Types {
                 name: RustScriptType::Number,
             },
-            AstType::NumberType(var_name) => {
-                match self.env.global_env.lookup(var_name.clone()) {
-                    Ok(var_type) => var_type.to_owned(),
-                    Err(err) =>{
-                    println!("Undefined variable {} with error {:?}", var_name, err);
-                        Types { name: RustScriptType::UnKnown }
-                    },
-                }
-            },
-            AstType::StringType(var_name) => {
-                match self.env.global_env.lookup(var_name.clone()) {
-                    Ok(var_type) => var_type.to_owned(),
-                    Err(err) =>{
-                    println!("Undefined variable {} with error {:?}", var_name, err);
-                        Types { name: RustScriptType::UnKnown }
-                    },
+            AstType::NumberType(var_name) | AstType::StringType(var_name)  => {
 
+                match env.lookup(var_name.clone()) {
+                    Ok(var_type) => var_type.to_owned(),
+                    Err(err) =>{
+                        println!("Undefined variable {} with error {:?}", var_name, err);
+                        Types { name: RustScriptType::UnKnown }
+                    },
                 }
+
+                
             },
-            AstType::LeftBrace => self.tc_block(exp.to_owned(), env),
+            AstType::LeftBrace => {
+                // println!("LEFT BRACE");
+                let mut block_env = TypeEnvironment::branch_env(env.record.clone());
+                self.tc_block(exp.to_owned(), &mut block_env)
+            },
             _ =>  {
                 println!("Unknown type for expression: {:?}", exp);
                 return Types::new(RustScriptType::UnKnown);
@@ -143,7 +149,8 @@ impl TypeChecker {
     }
 
     pub fn exec(&mut self, exp: Vec<AstType>) -> Types {
-        self.tc(&exp, &None)
+        let mut global_env = TypeEnvironment::new();
+        self.tc(&exp, &mut global_env)
     }
 
     pub fn test(&mut self, exp: Vec<AstType>, expected: Types) -> bool {
@@ -157,38 +164,54 @@ impl TypeChecker {
         }
     }
 
-    pub fn tc_block(&mut self, exp: Vec<AstType>, env: &Option<TypeEnvironment>) -> Types {
-
-        // we need statements of {} and statements/expressions ending in ;
+    fn tc_block(&mut self, exp: Vec<AstType>, env: &mut TypeEnvironment) -> Types {
         let mut statements: Vec<Vec<AstType>> = Vec::new();
         let mut temp: Vec<AstType> = Vec::new();
-        
+        let mut in_branch = 0;
+
         for operands in exp[1..].iter() {
-            //if we get {, keep push untill we get }
+
+            //These two ifs should be for storing {{}} without going down
             if operands == &AstType::LeftBrace {
-                while operands != &AstType::RightBrace {
-                    temp.push(operands.clone());
+                temp.push(operands.clone());
+                in_branch = in_branch + 1;
+                continue
+            }
+
+            if in_branch != 0 {
+                //Store everything within {}
+                temp.push(operands.clone());
+
+                if operands == &AstType::RightBrace {
+                    in_branch = in_branch - 1;
+
+                    if in_branch == 0 {
+                        statements.push(temp);
+                        temp = Vec::new();
+                    }
                 }
-                statements.push(temp.clone());
+
+                continue
             }
 
-            //Push statements/expressions ending in semi-colon
-            if operands != &AstType::SemiColon {
-                temp.push(operands.to_owned());
-            } else {
-                statements.push(temp.clone());
-                temp = Vec::new();
+            match operands {
+                AstType::SemiColon => {
+                    statements.push(temp);
+                    temp = Vec::new();
+                }
+                AstType::RightBrace => {},
+                _ => temp.push(operands.clone()),
             }
-            
         }
-
         let mut result = Types::new(RustScriptType::UnKnown);
 
         for stmt in statements.iter() {
-            result = self.tc(stmt, &None);
-            // println!("{:?}", stmt);
+            // result = self.tc(stmt, env);
+            println!("{:?}", stmt);
         }
 
         result
     }
+
+    
 }

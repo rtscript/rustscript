@@ -29,102 +29,135 @@ impl<'a> Parser<'a> {
     fn test_last(&mut self) {
         let string_type = Types::new(RustScriptType::String);
         let number_type = Types::new(RustScriptType::Number);
-        
-
-        
-        self.typechecker.test(vec![AstType::Number], number_type.clone());
-        self.typechecker.test(vec![AstType::String], string_type.clone());
-
-        self.typechecker.test(vec![AstType::Number, AstType::Plus, AstType::Number], number_type.clone());
-        self.typechecker.test(vec![AstType::Number, AstType::Slash, AstType::Number], number_type.clone());
-        self.typechecker.test(vec![AstType::Number, AstType::Star, AstType::Number], number_type.clone());
-        self.typechecker.test(vec![AstType::Number, AstType::Minus, AstType::Number], number_type.clone());
-
-        // self.typechecker.test(vec![AstType::String, AstType::Minus, AstType::String], string_type.clone());
-        // self.typechecker.test(vec![AstType::String, AstType::Slash, AstType::String], string_type.clone());
-        // self.typechecker.test(vec![AstType::String, AstType::Star, AstType::String], string_type.clone());
-        self.typechecker.test(vec![AstType::String, AstType::Plus, AstType::String], string_type.clone());
-
         let num_var_x = AstType::NumberType(String::from("x"));
         let num_var_y = AstType::NumberType(String::from("y"));
         let num_var_str_x = AstType::StringType(String::from("x"));
+        
+        // Number, String
+        // self.typechecker.test(vec![AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![AstType::String], string_type.clone());
+        // // Binary
+        // self.typechecker.test(vec![AstType::Number, AstType::Plus, AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![AstType::Number, AstType::Slash, AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![AstType::Number, AstType::Star, AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![AstType::Number, AstType::Minus, AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![AstType::String, AstType::Plus, AstType::String], string_type.clone());
 
-        self.typechecker.test(vec![AstType::Let, num_var_x.clone(), AstType::Number], number_type.clone());
-        self.typechecker.test(vec![num_var_x.clone()], number_type.clone());
+        // // Variable
+        // self.typechecker.test(vec![AstType::Let, num_var_x.clone(), AstType::Number], number_type.clone());
+        // self.typechecker.test(vec![num_var_x.clone()], number_type.clone());
+
+        // self.typechecker.test(
+        //     vec![AstType::LeftBrace,
+        //         //let x = Number;
+        //         AstType::Let,
+        //         num_var_x.clone(),
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //         //let y = Number;
+        //         AstType::Let,
+        //         num_var_y.clone(),
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //         //x * Number + y
+        //         num_var_x.clone(),
+        //         AstType::Star,
+        //         AstType::Number,
+        //         AstType::Plus,
+        //         num_var_y.clone(),
+        //         AstType::SemiColon,
+        //         //}
+        //         AstType::RightBrace,
+        //     ], number_type.clone(),
+        // );
+
+        // self.typechecker.test(
+        //     vec![
+        //         //{
+        //         AstType::LeftBrace,
+        //         // //let x Number;
+        //         AstType::Let,
+        //         num_var_x.clone(),
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //         // //leftBrace
+        //         AstType::LeftBrace,
+        //         //let 'x' = String;
+        //         AstType::Let,
+        //         num_var_str_x.clone(),
+        //         AstType::String,
+        //         AstType::SemiColon,
+        //         //'x' + string;
+        //         num_var_str_x.clone(),
+        //         AstType::Plus,
+        //         AstType::String,
+        //         AstType::SemiColon,
+        //         // }
+        //         AstType::RightBrace,
+        //         //x - Number
+        //         num_var_x.clone(),
+        //         AstType::Minus,
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //     ], number_type.clone()
+        // );
+
+        // self.typechecker.test(
+        //     vec![
+        //         //{
+        //         AstType::LeftBrace,
+        //         // //let x Number;
+        //         AstType::Let,
+        //         num_var_x.clone(),
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //         // {
+        //         AstType::LeftBrace,
+        //         //let y = Number;
+        //         AstType::Let,
+        //         num_var_y.clone(),
+        //         AstType::Number,
+        //         AstType::SemiColon,
+        //         //x + y;
+        //         num_var_x.clone(),
+        //         AstType::Plus,
+        //         num_var_y.clone(),
+        //         AstType::SemiColon,
+        //         // }
+        //         AstType::RightBrace,
+        //         AstType::RightBrace,
+        //     ], number_type.clone()
+        // );
 
         self.typechecker.test(
-            vec![AstType::LeftBrace,
-                //let x = Number;
+            vec![
+                //{
+                AstType::LeftBrace,
+                // //let x Number;
                 AstType::Let,
                 num_var_x.clone(),
                 AstType::Number,
                 AstType::SemiColon,
+                // {
+                AstType::LeftBrace,
                 //let y = Number;
                 AstType::Let,
                 num_var_y.clone(),
                 AstType::Number,
                 AstType::SemiColon,
-                //x * Number + y
+                //set x [x + y]
+                AstType::Set,
                 num_var_x.clone(),
-                AstType::Star,
-                AstType::Number,
+                num_var_x.clone(),
                 AstType::Plus,
                 num_var_y.clone(),
                 AstType::SemiColon,
-            ], number_type.clone(),
+                // }
+                AstType::RightBrace,
+                AstType::RightBrace,
+            ], number_type.clone()
         );
-
-        // self.typechecker.test_multi(
-        //     vec![
-        //         vec![AstType::LeftBrace],
-        //         vec![
-        //             AstType::Let,
-        //             num_var_x.clone(),
-        //             AstType::Number,
-        //         ], 
-        //         vec![
-        //             AstType::Let,
-        //             num_var_y.clone(),
-        //             AstType::Number
-        //         ],
-        //         vec![
-        //             num_var_x.clone(),
-        //             AstType::Star,
-        //             AstType::Number,
-        //             AstType::Plus,
-        //             num_var_y.clone(),
-        //         ],
-        //     ], number_type.clone(),
-        // );
-
-
-        // self.typechecker.test_multi(
-        //     vec![
-        //         vec![
-        //             AstType::Let,
-        //             num_var_x.clone(),
-        //             AstType::Number,
-        //         ], 
-        //         vec![AstType::LeftBrace],
-        //         vec![
-        //             AstType::Let,
-        //             num_var_str_x.clone(),
-        //             AstType::String,
-        //         ],
-        //         vec![
-        //             num_var_str_x.clone(),
-        //             AstType::Plus,
-        //             AstType::String,
-        //         ],
-        //         vec![AstType::RightBrace],
-        //         vec![
-        //             num_var_x.clone(),
-        //             AstType::Minus,
-        //             AstType::Number,
-        //         ],
-        //     ], number_type.clone()
-        // );
-
+        
 
     }
 
